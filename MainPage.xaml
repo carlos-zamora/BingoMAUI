@@ -1,0 +1,82 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:BingoMAUI.ViewModels"
+             xmlns:m="clr-namespace:BingoMAUI.Models"
+             xmlns:icons="http://www.aathifmahir.com/dotnet/2022/maui/icons"
+             x:Class="BingoMAUI.MainPage"
+             x:DataType="vm:MainPageViewModel"
+             Title="Bingo Boards">
+
+    <Grid RowDefinitions="Auto,*"
+          Padding="20">
+        <Button Grid.Row="0"
+                Text="Add New Board"
+                Command="{Binding AddNewBoardCommand}"
+                HorizontalOptions="Fill"
+                Margin="0,0,0,20"/>
+
+        <RefreshView Grid.Row="1"
+                     IsRefreshing="{Binding IsLoading}"
+                     Command="{Binding RefreshCommand}">
+            <CollectionView ItemsSource="{Binding Boards}"
+                            SelectionMode="None">
+                <CollectionView.ItemsLayout>
+                    <LinearItemsLayout Orientation="Vertical"
+                                       ItemSpacing="5"/>
+                </CollectionView.ItemsLayout>
+                <CollectionView.EmptyView>
+                    <StackLayout VerticalOptions="Center"
+                                 HorizontalOptions="Center"
+                                 Padding="20">
+                        <Label Text="No boards yet!"
+                               FontSize="18"
+                               HorizontalOptions="Center"/>
+                        <Label Text="Tap 'Add New Board' to create one"
+                               FontSize="14"
+                               HorizontalOptions="Center"
+                               TextColor="Gray"/>
+                    </StackLayout>
+                </CollectionView.EmptyView>
+                <CollectionView.ItemTemplate>
+                    <DataTemplate x:DataType="m:BingoBoard">
+                        <Border Margin="0,5"
+                                Padding="15"
+                                StrokeShape="RoundRectangle 8">
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type vm:MainPageViewModel}}, Path=BoardTappedCommand}"
+                                                      CommandParameter="{Binding .}"/>
+                            </Border.GestureRecognizers>
+                            <Grid Grid.RowDefinitions="Auto,Auto"
+                                  Grid.ColumnDefinitions="*,Auto,AUto"
+                                  ColumnSpacing="8">
+                                <Label Grid.Row="0"
+                                       Grid.Column="0"
+                                       Text="{Binding Name}"
+                                       FontSize="20"
+                                       FontAttributes="Bold"/>
+                                <Label Grid.Row="1"
+                                       Grid.Column="0"
+                                       Text="{Binding Size, StringFormat='{0}x{0} grid'}"
+                                       FontSize="14"
+                                       TextColor="Gray"/>
+
+                                <Button Grid.RowSpan="2"
+                                        Grid.Column="1"
+                                        icons:MauiIcon.Value="{icons:FontAwesome Icon=PenToSquare, IconSize=24}"
+                                        Command="{Binding Source={RelativeSource AncestorType={x:Type vm:MainPageViewModel}}, Path=EditBoardCommand}"
+                                        CommandParameter="{Binding .}"/>
+                                <Button Grid.RowSpan="2"
+                                        Grid.Column="2"
+                                        icons:MauiIcon.Value="{icons:FontAwesome Icon=TrashCan, IconSize=24}"
+                                        Command="{Binding Source={RelativeSource AncestorType={x:Type vm:MainPageViewModel}}, Path=DeleteBoardCommand}"
+                                        CommandParameter="{Binding .}"/>
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+        </RefreshView>
+    </Grid>
+
+</ContentPage>
