@@ -1,4 +1,5 @@
 ﻿using BingoMAUI.ViewModels;
+using MauiIcons.Core;
 
 namespace BingoMAUI
 {
@@ -11,6 +12,10 @@ namespace BingoMAUI
             InitializeComponent();
             _viewModel = viewModel;
             BindingContext = _viewModel;
+
+            // workaroud for MauiIcons XAML namespace issue
+            // see https://github.com/AathifMahir/MauiIcons?tab=readme-ov-file#workaround
+            _ = new MauiIcon();
         }
 
         protected override async void OnAppearing()

@@ -1,3 +1,4 @@
+using BingoMAUI.Helpers;
 using BingoMAUI.Models;
 using BingoMAUI.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -29,8 +30,8 @@ namespace BingoMAUI.ViewModels
         [NotifyPropertyChangedFor(nameof(ApplyConfigButtonLabel), nameof(PageTitle))]
         private bool _isNewBoard = true;
 
-        public string ApplyConfigButtonLabel => _isNewBoard ? "Create Board" : "Save Changes";
-        public string PageTitle => _isNewBoard ? "Configure New Board" : "Configure Board";
+        public string ApplyConfigButtonLabel => IsNewBoard ? "Create Board" : "Save Changes";
+        public string PageTitle => IsNewBoard ? "Configure New Board" : "Configure Board";
 
         partial void OnBoardSizeInputChanged(string value)
         {
@@ -119,17 +120,15 @@ namespace BingoMAUI.ViewModels
 
         private async Task _OnApplyConfig()
         {
-            if (_board is not null && !_isNewBoard)
+            if (Board is not null && !IsNewBoard)
             {
-                await _boardService.SaveBoardAsync(_board);
-                await Shell.Current.GoToAsync($"//MainPage/BoardViewPage?boardId={_board.Id}");
+                await _boardService.SaveBoardAsync(Board);
+                await Shell.Current.GoToAsync($"//MainPage/BoardViewPage?boardId={Board.Id}");
             }
             else
             {
-                var content = CellInputs.Select(c => c.Value)
-                                        .Shuffle()
-                                        .ToArray();
-                var newBoard = new BingoBoard(BoardNameInput, CellInputs.Count, content);
+                var content = EnumerableExtensions.Shuffle(CellInputs.Select(c => c.Value));
+                var newBoard = new BingoBoard(BoardNameInput, CellInputs.Count, content.ToArray());
                 await _boardService.SaveBoardAsync(newBoard);
                 await Shell.Current.GoToAsync($"//MainPage/BoardViewPage?boardId={newBoard.Id}");
             }
