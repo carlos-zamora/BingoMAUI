@@ -44,7 +44,7 @@
                                 Padding="15"
                                 StrokeShape="RoundRectangle 8">
                             <Border.GestureRecognizers>
-                                <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type vm:MainPageViewModel}}, Path=BoardTappedCommand}"
+                                <TapGestureRecognizer Command="{Binding BoardTappedCommand}"
                                                       CommandParameter="{Binding .}"/>
                             </Border.GestureRecognizers>
                             <Grid Grid.RowDefinitions="Auto,Auto"
@@ -64,12 +64,12 @@
                                 <Button Grid.RowSpan="2"
                                         Grid.Column="1"
                                         mi:MauiIcon.Value="{mi:FontAwesome Icon=PenToSquare, IconSize=24}"
-                                        Command="{Binding Source={RelativeSource AncestorType={x:Type vm:MainPageViewModel}}, Path=EditBoardCommand}"
+                                        Command="{Binding EditBoardCommand}"
                                         CommandParameter="{Binding .}"/>
                                 <Button Grid.RowSpan="2"
                                         Grid.Column="2"
                                         mi:MauiIcon.Value="{mi:FontAwesome Icon=TrashCan, IconSize=24}"
-                                        Command="{Binding Source={RelativeSource AncestorType={x:Type vm:MainPageViewModel}}, Path=DeleteBoardCommand}"
+                                        Command="{Binding DeleteBoardCommand}"
                                         CommandParameter="{Binding .}"/>
                             </Grid>
                         </Border>
