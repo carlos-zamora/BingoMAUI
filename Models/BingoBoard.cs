@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace BingoMAUI.Models
+﻿namespace BingoMAUI.Models
 {
     public class BingoBoard
     {

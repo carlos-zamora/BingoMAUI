@@ -1,11 +1,7 @@
 using System.Collections.ObjectModel;
-using System.ComponentModel;
-using System.Runtime.CompilerServices;
-using System.Threading.Tasks;
-using System.Windows.Input;
-using BingoMAUI.Models;
 using BingoMAUI.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 
 namespace BingoMAUI.ViewModels
 {
@@ -17,39 +13,29 @@ namespace BingoMAUI.ViewModels
         private bool _isLoading;
 
         [ObservableProperty]
-        private ObservableCollection<BingoBoard> _boards = new();
-
-        public ICommand AddNewBoardCommand { get; }
-        public ICommand BoardTappedCommand { get; }
-        public ICommand EditBoardCommand { get; }
-        public ICommand DeleteBoardCommand { get; }
-        public ICommand RefreshCommand { get; }
+        private ObservableCollection<BoardViewModel> _boardVMs = new();
 
         public MainPageViewModel(IBingoBoardService boardService)
         {
             _boardService = boardService;
-            AddNewBoardCommand = new Command(async () => await OnAddNewBoard());
-            BoardTappedCommand = new Command<BingoBoard>(async (board) => await OnBoardTapped(board));
-            EditBoardCommand = new Command<BingoBoard>(async (board) => await OnEditBoard(board));
-            DeleteBoardCommand = new Command<BingoBoard>(async (board) => await OnDeleteBoard(board));
-            RefreshCommand = new Command(async () => await _LoadBoards());
         }
 
         public async Task InitializeAsync()
         {
-            await _LoadBoards();
+            await LoadBoards();
         }
 
-        private async Task _LoadBoards()
+        [RelayCommand]
+        private async Task LoadBoards()
         {
             IsLoading = true;
             try
             {
                 var boards = await _boardService.GetAllBoardsAsync();
-                Boards.Clear();
+                BoardVMs.Clear();
                 foreach (var board in boards)
                 {
-                    Boards.Add(board);
+                    BoardVMs.Add(new BoardViewModel(board, this));
                 }
             }
             finally
@@ -58,37 +44,20 @@ namespace BingoMAUI.ViewModels
             }
         }
 
-        private async Task OnAddNewBoard()
+        [RelayCommand]
+        private async Task AddNewBoard()
         {
             await Shell.Current.GoToAsync("BoardConfigPage?boardId=new");
         }
 
-        private async Task OnBoardTapped(BingoBoard board)
+        public async Task DeleteBoardAsync(string boardId)
         {
-            if (board == null)
+            await _boardService.DeleteBoardAsync(boardId);
+            var boardToRemove = BoardVMs.FirstOrDefault(b => b.Id == boardId);
+            if (boardToRemove != null)
             {
-                return;
+                BoardVMs.Remove(boardToRemove);
             }
-            await Shell.Current.GoToAsync($"BoardViewPage?boardId={board.Id}");
-        }
-
-        private async Task OnEditBoard(BingoBoard board)
-        {
-            if (board == null)
-            {
-                return;
-            }
-            await Shell.Current.GoToAsync($"BoardConfigPage?boardId={board.Id}");
-        }
-
-        private async Task OnDeleteBoard(BingoBoard board)
-        {
-            if (board == null)
-            {
-                return;
-            }
-            await _boardService.DeleteBoardAsync(board.Id);
-            Boards.Remove(board);
         }
     }
 }

@@ -18,8 +18,8 @@
 
         <RefreshView Grid.Row="1"
                      IsRefreshing="{Binding IsLoading}"
-                     Command="{Binding RefreshCommand}">
-            <CollectionView ItemsSource="{Binding Boards}"
+                     Command="{Binding LoadBoardsCommand}">
+            <CollectionView ItemsSource="{Binding BoardVMs}"
                             SelectionMode="None">
                 <CollectionView.ItemsLayout>
                     <LinearItemsLayout Orientation="Vertical"
@@ -39,12 +39,12 @@
                     </StackLayout>
                 </CollectionView.EmptyView>
                 <CollectionView.ItemTemplate>
-                    <DataTemplate x:DataType="m:BingoBoard">
+                    <DataTemplate x:DataType="vm:BoardViewModel">
                         <Border Margin="0,5"
                                 Padding="15"
                                 StrokeShape="RoundRectangle 8">
                             <Border.GestureRecognizers>
-                                <TapGestureRecognizer Command="{Binding BoardTappedCommand}"
+                                <TapGestureRecognizer Command="{Binding NavigateCommand}"
                                                       CommandParameter="{Binding .}"/>
                             </Border.GestureRecognizers>
                             <Grid Grid.RowDefinitions="Auto,Auto"
@@ -64,12 +64,12 @@
                                 <Button Grid.RowSpan="2"
                                         Grid.Column="1"
                                         mi:MauiIcon.Value="{mi:FontAwesome Icon=PenToSquare, IconSize=24}"
-                                        Command="{Binding EditBoardCommand}"
+                                        Command="{Binding EditCommand}"
                                         CommandParameter="{Binding .}"/>
                                 <Button Grid.RowSpan="2"
                                         Grid.Column="2"
                                         mi:MauiIcon.Value="{mi:FontAwesome Icon=TrashCan, IconSize=24}"
-                                        Command="{Binding DeleteBoardCommand}"
+                                        Command="{Binding DeleteCommand}"
                                         CommandParameter="{Binding .}"/>
                             </Grid>
                         </Border>

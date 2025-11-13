@@ -2,13 +2,7 @@ using BingoMAUI.Helpers;
 using BingoMAUI.Models;
 using BingoMAUI.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
-using Microsoft.Maui;
-using System;
 using System.Collections.ObjectModel;
-using System.ComponentModel;
-using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Threading.Tasks;
 using System.Windows.Input;
 
 namespace BingoMAUI.ViewModels
