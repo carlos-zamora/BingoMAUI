@@ -22,7 +22,7 @@
 		<MauiEnableXamlCBindingWithSourceCompilation>true</MauiEnableXamlCBindingWithSourceCompilation>
 
 		<!-- Display name -->
-		<ApplicationTitle>BingoMAUI</ApplicationTitle>
+		<ApplicationTitle>Bingo by Carlos 2</ApplicationTitle>
 
 		<!-- App Identifier -->
 		<ApplicationId>com.carloszamora.bingobycarlos2</ApplicationId>
