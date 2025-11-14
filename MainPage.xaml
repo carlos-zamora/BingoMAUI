@@ -6,7 +6,7 @@
              xmlns:mi="http://www.aathifmahir.com/dotnet/2022/maui/icons"
              x:Class="BingoMAUI.MainPage"
              x:DataType="vm:MainPageViewModel"
-             Title="Bingo Boards">
+             Title="Boards">
 
     <Grid RowDefinitions="Auto,*"
           Padding="20">

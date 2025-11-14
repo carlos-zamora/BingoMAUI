@@ -60,8 +60,13 @@ namespace BingoMAUI.Views
                 button.SetBinding(Button.CommandProperty, new Binding(nameof(_viewModel.CellToggledCommand)));
                 button.SetBinding(Button.BackgroundColorProperty,
                                   new Binding(nameof(cell.IsMarked),
-                                  source: cell,
-                                  converter: new MarkedToColorConverter()));
+                                    source: cell,
+                                    converter: new MarkedToColorConverter()));
+                button.SetBinding(Button.TextColorProperty,
+                                  new Binding(nameof(cell.IsMarked),
+                                    source: cell,
+                                    converter: new MarkedToColorConverter(),
+                                    converterParameter: "Foreground"));
 
                 Grid.SetRow(button, row);
                 Grid.SetColumn(button, col);
@@ -74,11 +79,14 @@ namespace BingoMAUI.Views
     {
         public object Convert(object? value, Type targetType, object? parameter, System.Globalization.CultureInfo culture)
         {
+            bool isForeground = parameter as string == "Foreground";
+            var markedColor = isForeground ? (Color)Application.Current.Resources["Primary"] : Colors.Green;
+            var unmarkedColor = isForeground ? (Color)Application.Current.Resources["Primary"] : Colors.Gray;
             if (value is bool isMarked && isMarked)
             {
-                return Colors.Green;
+                return markedColor;
             }
-            return Colors.Gray;
+            return unmarkedColor;
         }
 
         public object ConvertBack(object? value, Type targetType, object? parameter, System.Globalization.CultureInfo culture)

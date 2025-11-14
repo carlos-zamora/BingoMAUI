@@ -5,32 +5,22 @@
              x:Class="BingoMAUI.Views.BoardViewPage"
              x:DataType="vm:BoardViewPageViewModel"
              Title="{Binding BoardName}">
-
-  <ScrollView>
-    <VerticalStackLayout Padding="20" Spacing="20">
-
-      <Label Text="{Binding BoardName}"
-             FontSize="24"
-             FontAttributes="Bold"
-             HorizontalOptions="Center"/>
-
-      <Grid x:Name="BingoGrid"
+    <ScrollView>
+        <Grid x:Name="BingoGrid"
             RowSpacing="5"
             ColumnSpacing="5"
             HorizontalOptions="Center"
             VerticalOptions="Center">
-        <Grid.Resources>
-          <Style TargetType="Button">
-            <Setter Property="CornerRadius" Value="8"/>
-            <Setter Property="FontSize" Value="12"/>
-            <Setter Property="Padding" Value="5"/>
-            <Setter Property="HeightRequest" Value="80"/>
-            <Setter Property="WidthRequest" Value="80"/>
-          </Style>
-        </Grid.Resources>
-      </Grid>
-
-    </VerticalStackLayout>
-  </ScrollView>
-
+            <Grid.Resources>
+                <Style TargetType="Button">
+                    <Setter Property="CornerRadius" Value="8"/>
+                    <Setter Property="FontSize" Value="12"/>
+                    <Setter Property="FontAttributes" Value="Bold"/>
+                    <Setter Property="Padding" Value="5"/>
+                    <Setter Property="HeightRequest" Value="80"/>
+                    <Setter Property="WidthRequest" Value="80"/>
+                </Style>
+            </Grid.Resources>
+        </Grid>
+    </ScrollView>
 </ContentPage>
