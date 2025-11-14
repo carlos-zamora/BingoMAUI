@@ -19,6 +19,10 @@ namespace BingoMAUI.ViewModels
 
         [ObservableProperty]
         private string _boardSizeInput = string.Empty;
+        partial void OnBoardSizeInputChanged(string value)
+        {
+            _UpdateCellFields();
+        }
 
         [ObservableProperty]
         [NotifyPropertyChangedFor(nameof(ApplyConfigButtonLabel), nameof(PageTitle))]
@@ -26,11 +30,6 @@ namespace BingoMAUI.ViewModels
 
         public string ApplyConfigButtonLabel => IsNewBoard ? "Create Board" : "Save Changes";
         public string PageTitle => IsNewBoard ? "Configure New Board" : "Configure Board";
-
-        partial void OnBoardSizeInputChanged(string value)
-        {
-            UpdateCellFields();
-        }
 
         [ObservableProperty]
         public ObservableCollection<CellInputItem> _cellInputs = new();
@@ -76,7 +75,7 @@ namespace BingoMAUI.ViewModels
             }
         }
 
-        private void UpdateCellFields()
+        private void _UpdateCellFields()
         {
             if (int.TryParse(BoardSizeInput, out int size) && size > 0 && size <= 10)
             {
