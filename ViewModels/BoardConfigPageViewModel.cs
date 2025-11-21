@@ -116,14 +116,20 @@ namespace BingoMAUI.ViewModels
             if (Board is not null && !IsNewBoard)
             {
                 await _boardService.SaveBoardAsync(Board);
-                await Shell.Current.GoToAsync($"//MainPage/BoardViewPage?boardId={Board.Id}");
+                await MainThread.InvokeOnMainThreadAsync(async () =>
+                {
+                    await Shell.Current.GoToAsync($"//MainPage/BoardViewPage?boardId={Board.Id}");
+                });
             }
             else
             {
                 var content = EnumerableExtensions.Shuffle(CellInputs.Select(c => c.Value));
                 var newBoard = new BingoBoard(BoardNameInput, CellInputs.Count, content.ToArray());
                 await _boardService.SaveBoardAsync(newBoard);
-                await Shell.Current.GoToAsync($"//MainPage/BoardViewPage?boardId={newBoard.Id}");
+                await MainThread.InvokeOnMainThreadAsync(async () =>
+                {
+                    await Shell.Current.GoToAsync($"//MainPage/BoardViewPage?boardId={newBoard.Id}");
+                });
             }
         }
     }
