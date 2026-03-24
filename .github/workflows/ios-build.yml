@@ -2,10 +2,16 @@ name: Build iOS .NET MAUI App
 
 on:
   workflow_dispatch:
+    inputs:
+      team_id:
+        description: 'Apple Team ID (optional - will auto-extract if not provided)'
+        required: false
+        type: string
 
 jobs:
     build-ios:
         runs-on: macos-latest
+        timeout-minutes: 60
 
         steps:
             - name: Checkout repository
@@ -72,37 +78,82 @@ jobs:
                   -p:ArchiveOnBuild=true \
                   -p:CodesignKey="Apple Distribution" \
                   -p:CodesignProvision="Bingo By Carlos 2 Provisioning Profile"
+                echo "::notice::iOS IPA build completed successfully"
 
-            - name: Upload to App Store Connect
-              env:
-                APPLE_ID: ${{ secrets.APPLE_ID }}
-                APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+            - name: Extract Team ID
+              id: team-id
               run: |
-                # Find the IPA file
-                IPA_PATH=$(find . -name "*.ipa" | head -n 1)
+                if [ -n "${{ inputs.team_id }}" ]; then
+                  TEAM_ID="${{ inputs.team_id }}"
+                  echo "Using provided Team ID: $TEAM_ID"
+                else
+                  # Extract from certificate
+                  TEAM_ID=$(security find-certificate -c "Apple Distribution" -p 2>/dev/null | \
+                    openssl x509 -noout -text 2>/dev/null | \
+                    grep "OU = " | head -1 | awk '{print $NF}' || echo "")
+                  
+                  if [ -z "$TEAM_ID" ]; then
+                    echo "::error::Could not extract Team ID from certificate"
+                    exit 1
+                  fi
+                  echo "Extracted Team ID from certificate: $TEAM_ID"
+                fi
+                echo "team_id=$TEAM_ID" >> $GITHUB_OUTPUT
+
+            - name: Notarize IPA
+              timeout-minutes: 30
+              run: |
+                IPA_PATH=$(find . -name "*.ipa" -type f | head -n 1)
+                if [ -z "$IPA_PATH" ]; then
+                  echo "::error::No IPA file found"
+                  exit 1
+                fi
                 echo "Found IPA at: $IPA_PATH"
                 
-                # Upload to App Store Connect using xcrun notarytool and transporter
-                # First, notarize the app
+                echo "Starting notarization..."
                 xcrun notarytool submit "$IPA_PATH" \
-                  --apple-id "$APPLE_ID" \
-                  --password "$APPLE_APP_SPECIFIC_PASSWORD" \
-                  --team-id $(security find-certificate -c "Apple Distribution" -p | openssl x509 -noout -text | grep "OU = " | head -1 | awk '{print $NF}') \
-                  --wait
+                  --apple-id "${{ secrets.APPLE_ID }}" \
+                  --password "${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}" \
+                  --team-id "${{ steps.team-id.outputs.team_id }}" \
+                  --wait \
+                  --timeout 30m
                 
-                # Upload using Transporter
+                if [ $? -eq 0 ]; then
+                  echo "::notice::Notarization completed successfully"
+                else
+                  echo "::error::Notarization failed"
+                  exit 1
+                fi
+
+            - name: Upload to App Store Connect
+              timeout-minutes: 15
+              run: |
+                IPA_PATH=$(find . -name "*.ipa" -type f | head -n 1)
+                if [ -z "$IPA_PATH" ]; then
+                  echo "::error::No IPA file found for upload"
+                  exit 1
+                fi
+                
+                echo "Uploading IPA to App Store Connect..."
                 /Applications/Transporter.app/Contents/MacOS/Transporter \
                   -m upload \
-                  -u "$APPLE_ID" \
-                  -p "$APPLE_APP_SPECIFIC_PASSWORD" \
+                  -u "${{ secrets.APPLE_ID }}" \
+                  -p "${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}" \
                   -f "$IPA_PATH" \
-                  -success "successfulupload"\
+                  -success "successfulupload" || {
+                  echo "::error::Upload to App Store Connect failed"
+                  exit 1
+                }
+                echo "::notice::Upload to App Store Connect completed successfully"\
 
             - name: Upload IPA artifact
+              if: always()
               uses: actions/upload-artifact@v4
               with:
                 name: iOS-IPA
                 path: '**/*.ipa'
+                retention-days: 7
+                if-no-files-found: warn
                 
             - name: Cleanup
               if: always()
