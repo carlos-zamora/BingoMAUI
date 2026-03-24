@@ -82,12 +82,21 @@ jobs:
                 IPA_PATH=$(find . -name "*.ipa" | head -n 1)
                 echo "Found IPA at: $IPA_PATH"
                 
-                # Upload to App Store Connect using xcrun altool
-                xcrun altool --upload-app \
-                --type ios \
-                --file "$IPA_PATH" \
-                --username "$APPLE_ID" \
-                --password "$APPLE_APP_SPECIFIC_PASSWORD" \
+                # Upload to App Store Connect using xcrun notarytool and transporter
+                # First, notarize the app
+                xcrun notarytool submit "$IPA_PATH" \
+                  --apple-id "$APPLE_ID" \
+                  --password "$APPLE_APP_SPECIFIC_PASSWORD" \
+                  --team-id $(security find-certificate -c "Apple Distribution" -p | openssl x509 -noout -text | grep "OU = " | head -1 | awk '{print $NF}') \
+                  --wait
+                
+                # Upload using Transporter
+                /Applications/Transporter.app/Contents/MacOS/Transporter \
+                  -m upload \
+                  -u "$APPLE_ID" \
+                  -p "$APPLE_APP_SPECIFIC_PASSWORD" \
+                  -f "$IPA_PATH" \
+                  -success "successfulupload"\
 
             - name: Upload IPA artifact
               uses: actions/upload-artifact@v4
