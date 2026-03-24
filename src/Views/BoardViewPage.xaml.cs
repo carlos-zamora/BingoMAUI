@@ -16,6 +16,12 @@ namespace BingoMAUI.Views
             _viewModel.PropertyChanged += ViewModel_PropertyChanged;
         }
 
+        protected override void OnDisappearing()
+        {
+            base.OnDisappearing();
+            Preferences.Remove("last_board_id");
+        }
+
         private void ViewModel_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
         {
             if (e.PropertyName == nameof(_viewModel.Cells))

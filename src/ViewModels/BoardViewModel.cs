@@ -22,6 +22,7 @@ namespace BingoMAUI.ViewModels
         [RelayCommand]
         public async Task Navigate()
         {
+            Preferences.Set("last_board_id", Id);
             await Shell.Current.GoToAsync($"BoardViewPage?boardId={Id}");
         }
 
