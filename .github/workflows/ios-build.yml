@@ -2,11 +2,6 @@ name: Build iOS .NET MAUI App
 
 on:
   workflow_dispatch:
-    inputs:
-      team_id:
-        description: 'Apple Team ID (optional - will auto-extract if not provided)'
-        required: false
-        type: string
 
 jobs:
     build-ios:
@@ -33,7 +28,6 @@ jobs:
                 APPLE_PROVISIONING_PROFILE: ${{ secrets.APPLE_PROVISIONING_PROFILE }}
               run: |
                     echo "$APPLE_PROVISIONING_PROFILE" | base64 --decode > profile.mobileprovision
-                    # Create the standard macOS directory where Xcode looks for provisioning profiles
                     mkdir -p "$HOME/Library/MobileDevice/Provisioning Profiles"
                     cp profile.mobileprovision "$HOME/Library/MobileDevice/Provisioning Profiles/"
 
@@ -42,31 +36,23 @@ jobs:
                 APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
                 APPLE_CERT_PASSWORD: ${{ secrets.APPLE_CERT_PASSWORD }}
               run: |
-                # Decode certificate
-                echo "$APPLE_CERTIFICATE" | base64 --decode > cert.p12
-                
-                # Create variables
                 KEYCHAIN_PATH="$RUNNER_TEMP/build.keychain-db"
                 KEYCHAIN_PASSWORD=$(openssl rand -base64 32)
-                
-                # Create temporary keychain
+
+                echo "$APPLE_CERTIFICATE" | base64 --decode > cert.p12
+
                 security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
                 security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
                 security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
-                
-                # Import certificate to keychain
-                # Try with password first, if it fails, try without password
+
                 if [ -n "$APPLE_CERT_PASSWORD" ]; then
                   security import cert.p12 -P "$APPLE_CERT_PASSWORD" -A -t cert -f pkcs12 -k "$KEYCHAIN_PATH" || \
                   security import cert.p12 -A -t cert -f pkcs12 -k "$KEYCHAIN_PATH"
                 else
                   security import cert.p12 -A -t cert -f pkcs12 -k "$KEYCHAIN_PATH"
                 fi
-                
-                # Add keychain to search list
+
                 security list-keychains -d user -s "$KEYCHAIN_PATH"
-                
-                # Allow codesign to access keychain without prompting
                 security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
 
             - name: Build iOS IPA
@@ -80,26 +66,6 @@ jobs:
                   -p:CodesignProvision="Bingo By Carlos 2 Provisioning Profile"
                 echo "::notice::iOS IPA build completed successfully"
 
-            - name: Extract Team ID
-              id: team-id
-              run: |
-                if [ -n "${{ inputs.team_id }}" ]; then
-                  TEAM_ID="${{ inputs.team_id }}"
-                  echo "Using provided Team ID: $TEAM_ID"
-                else
-                  # Extract from certificate
-                  TEAM_ID=$(security find-certificate -c "Apple Distribution" -p 2>/dev/null | \
-                    openssl x509 -noout -text 2>/dev/null | \
-                    grep "OU = " | head -1 | awk '{print $NF}' || echo "")
-                  
-                  if [ -z "$TEAM_ID" ]; then
-                    echo "::error::Could not extract Team ID from certificate"
-                    exit 1
-                  fi
-                  echo "Extracted Team ID from certificate: $TEAM_ID"
-                fi
-                echo "team_id=$TEAM_ID" >> $GITHUB_OUTPUT
-
             - name: Notarize IPA
               timeout-minutes: 30
               run: |
@@ -109,15 +75,15 @@ jobs:
                   exit 1
                 fi
                 echo "Found IPA at: $IPA_PATH"
-                
+
                 echo "Starting notarization..."
                 xcrun notarytool submit "$IPA_PATH" \
                   --apple-id "${{ secrets.APPLE_ID }}" \
                   --password "${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}" \
-                  --team-id "${{ steps.team-id.outputs.team_id }}" \
+                  --team-id "${{ secrets.APPLE_TEAM_ID }}" \
                   --wait \
                   --timeout 30m
-                
+
                 if [ $? -eq 0 ]; then
                   echo "::notice::Notarization completed successfully"
                 else
@@ -133,18 +99,31 @@ jobs:
                   echo "::error::No IPA file found for upload"
                   exit 1
                 fi
-                
+
                 echo "Uploading IPA to App Store Connect..."
-                /Applications/Transporter.app/Contents/MacOS/Transporter \
-                  -m upload \
-                  -u "${{ secrets.APPLE_ID }}" \
-                  -p "${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}" \
-                  -f "$IPA_PATH" \
-                  -success "successfulupload" || {
+
+                if [ -f "/Applications/Transporter.app/Contents/MacOS/Transporter" ]; then
+                  /Applications/Transporter.app/Contents/MacOS/Transporter \
+                    -m upload \
+                    -u "${{ secrets.APPLE_ID }}" \
+                    -p "${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}" \
+                    -f "$IPA_PATH" \
+                    -success "successfulupload"
+                else
+                  echo "Transporter not found, using altool..."
+                  xcrun altool --upload-app \
+                    --type ios \
+                    --file "$IPA_PATH" \
+                    --username "${{ secrets.APPLE_ID }}" \
+                    --password "${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}"
+                fi
+
+                if [ $? -eq 0 ]; then
+                  echo "::notice::Upload to App Store Connect completed successfully"
+                else
                   echo "::error::Upload to App Store Connect failed"
                   exit 1
-                }
-                echo "::notice::Upload to App Store Connect completed successfully"\
+                fi
 
             - name: Upload IPA artifact
               if: always()
@@ -154,7 +133,7 @@ jobs:
                 path: '**/*.ipa'
                 retention-days: 7
                 if-no-files-found: warn
-                
+
             - name: Cleanup
               if: always()
               run: |
